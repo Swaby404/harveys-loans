@@ -6,18 +6,9 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function sanitizeString(str: string): string {
-  return str
-    .replace(/[<>"'&]/g, (char) => {
-      const map: Record<string, string> = {
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#x27;",
-        "&": "&amp;",
-      };
-      return map[char] ?? char;
-    })
-    .trim();
+  // Only strip actual HTML injection characters (<, >) — preserve apostrophes,
+  // hyphens, ampersands etc. which are valid in names and contact info
+  return str.replace(/[<>]/g, "").trim();
 }
 
 export function isValidEmail(email: string): boolean {

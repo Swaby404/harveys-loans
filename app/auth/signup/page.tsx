@@ -23,7 +23,10 @@ export default function SignUpPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<SignUpInput>({ resolver: zodResolver(signUpSchema) });
+  } = useForm<SignUpInput>({
+    resolver: zodResolver(signUpSchema),
+    mode: "onBlur", // validate on blur so errors appear as user moves between fields
+  });
 
   const onSubmit = async (data: SignUpInput) => {
     setError("");
@@ -33,10 +36,10 @@ export default function SignUpPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          firstName: data.firstName,
-          lastName: data.lastName,
+          firstName: data.firstName.trim(),
+          lastName: data.lastName.trim(),
           email: data.email.toLowerCase().trim(),
-          phone: data.phone,
+          phone: data.phone?.trim() || undefined,
           password: data.password,
         }),
       });
@@ -73,15 +76,17 @@ export default function SignUpPage() {
             <div className="grid grid-cols-2 gap-4">
               <Input
                 label="First Name"
-                placeholder="John"
+                placeholder="e.g. John"
                 required
+                autoComplete="given-name"
                 error={errors.firstName?.message}
                 {...register("firstName")}
               />
               <Input
                 label="Last Name"
-                placeholder="Doe"
+                placeholder="e.g. Smith"
                 required
+                autoComplete="family-name"
                 error={errors.lastName?.message}
                 {...register("lastName")}
               />
@@ -92,6 +97,7 @@ export default function SignUpPage() {
               type="email"
               placeholder="you@example.com"
               required
+              autoComplete="email"
               error={errors.email?.message}
               {...register("email")}
             />
@@ -99,9 +105,10 @@ export default function SignUpPage() {
             <Input
               label="Phone Number"
               type="tel"
-              placeholder="+1 (345) 123-4567"
+              placeholder="Any format e.g. 345-123-4567"
+              autoComplete="tel"
               error={errors.phone?.message}
-              helperText="Optional – for account recovery"
+              helperText="Optional — any format accepted"
               {...register("phone")}
             />
 
@@ -109,12 +116,19 @@ export default function SignUpPage() {
               <Input
                 label="Password"
                 type={showPw ? "text" : "password"}
-                placeholder="Min. 8 chars, 1 uppercase, 1 number"
+                placeholder="Min. 8 characters, 1 uppercase, 1 number"
                 required
+                autoComplete="new-password"
                 error={errors.password?.message}
                 {...register("password")}
               />
-              <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-9 text-gray-400 hover:text-navy-600" tabIndex={-1}>
+              <button
+                type="button"
+                onClick={() => setShowPw(!showPw)}
+                className="absolute right-3 top-9 text-gray-400 hover:text-navy-600"
+                tabIndex={-1}
+                aria-label={showPw ? "Hide password" : "Show password"}
+              >
                 {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
@@ -125,10 +139,17 @@ export default function SignUpPage() {
                 type={showConfirmPw ? "text" : "password"}
                 placeholder="Re-enter your password"
                 required
+                autoComplete="new-password"
                 error={errors.confirmPassword?.message}
                 {...register("confirmPassword")}
               />
-              <button type="button" onClick={() => setShowConfirmPw(!showConfirmPw)} className="absolute right-3 top-9 text-gray-400 hover:text-navy-600" tabIndex={-1}>
+              <button
+                type="button"
+                onClick={() => setShowConfirmPw(!showConfirmPw)}
+                className="absolute right-3 top-9 text-gray-400 hover:text-navy-600"
+                tabIndex={-1}
+                aria-label={showConfirmPw ? "Hide password" : "Show password"}
+              >
                 {showConfirmPw ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>

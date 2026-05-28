@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,8 +13,12 @@ import { Input } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
 import { signInSchema, type SignInInput } from "@/lib/validations/authSchemas";
 
-export default function SignInPage() {
+function SignInForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const justRegistered = searchParams.get("registered") === "1";
+  const justReset = searchParams.get("reset") === "1";
+
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -37,7 +41,7 @@ export default function SignInPage() {
       if (result?.error === "TOO_MANY_REQUESTS") {
         setError("Too many login attempts. Please wait 15 minutes and try again.");
       } else if (result?.error) {
-        setError("Invalid email or password. Please try again.");
+        setError("Incorrect email or password. Please try again.");
       } else {
         router.push("/dashboard");
         router.refresh();
@@ -63,6 +67,16 @@ export default function SignInPage() {
             <p className="text-gray-500 text-sm mt-1">Sign in to access your account</p>
           </div>
 
+          {justRegistered && (
+            <Alert type="success" className="mb-4">
+              Account created successfully! Sign in below to continue.
+            </Alert>
+          )}
+          {justReset && (
+            <Alert type="success" className="mb-4">
+              Password reset successful. Sign in with your new password.
+            </Alert>
+          )}
           {error && <Alert type="error" className="mb-4">{error}</Alert>}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
@@ -72,10 +86,11 @@ export default function SignInPage() {
                 type="email"
                 placeholder="you@example.com"
                 required
+                autoComplete="email"
                 error={errors.email?.message}
                 {...register("email")}
               />
-              <Mail size={16} className="absolute right-3 top-9 text-gray-400" />
+              <Mail size={16} className="absolute right-3 top-9 text-gray-400 pointer-events-none" />
             </div>
 
             <div className="relative">
@@ -84,6 +99,7 @@ export default function SignInPage() {
                 type={showPw ? "text" : "password"}
                 placeholder="Enter your password"
                 required
+                autoComplete="current-password"
                 error={errors.password?.message}
                 {...register("password")}
               />
@@ -92,6 +108,7 @@ export default function SignInPage() {
                 onClick={() => setShowPw(!showPw)}
                 className="absolute right-3 top-9 text-gray-400 hover:text-navy-600"
                 tabIndex={-1}
+                aria-label={showPw ? "Hide password" : "Show password"}
               >
                 {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -124,5 +141,13 @@ export default function SignInPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-hero-pattern" />}>
+      <SignInForm />
+    </Suspense>
   );
 }

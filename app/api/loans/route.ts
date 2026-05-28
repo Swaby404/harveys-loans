@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
       action: "LOAN_APPLICATION_SUBMITTED",
       entityType: "Loan",
       entityId: loan.id,
-      metadata: { requestedAmount, jobTitle },
+      metadata: JSON.stringify({ requestedAmount, jobTitle }),
     },
   });
 

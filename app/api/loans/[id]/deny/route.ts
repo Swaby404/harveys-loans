@@ -44,7 +44,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       action: "LOAN_DENIED",
       entityType: "Loan",
       entityId: id,
-      metadata: { denialReason: body.denialReason },
+      metadata: JSON.stringify({ denialReason: body.denialReason }),
     },
   });
 

@@ -22,16 +22,17 @@ export async function POST(req: NextRequest) {
 
   const parsed = signUpSchema.safeParse(body);
   if (!parsed.success) {
-    // Zod v3 uses .errors, Zod v4 uses .issues
-    const issues = (parsed.error as { issues?: { message: string }[]; errors?: { message: string }[] }).issues
-      ?? (parsed.error as { errors?: { message: string }[] }).errors
-      ?? [];
-    return NextResponse.json({ error: issues[0]?.message ?? "Validation error" }, { status: 422 });
+    // Support both Zod v3 (.errors) and Zod v4 (.issues)
+    const err = parsed.error as { issues?: { message: string }[]; errors?: { message: string }[] };
+    const firstMessage = (err.issues ?? err.errors ?? [])[0]?.message ?? "Validation error";
+    return NextResponse.json({ error: firstMessage }, { status: 422 });
   }
 
   const { firstName, lastName, email, phone, password } = parsed.data;
 
-  const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+  const normalizedEmail = email.toLowerCase().trim();
+
+  const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
   if (existing) {
     return NextResponse.json({ error: "An account with this email already exists." }, { status: 409 });
   }
@@ -42,8 +43,8 @@ export async function POST(req: NextRequest) {
     data: {
       firstName: sanitizeString(firstName),
       lastName: sanitizeString(lastName),
-      email: email.toLowerCase().trim(),
-      phone: phone ? sanitizeString(phone) : null,
+      email: normalizedEmail,
+      phone: phone && phone.trim() !== "" ? sanitizeString(phone.trim()) : null,
       passwordHash,
       role: "CLIENT",
     },

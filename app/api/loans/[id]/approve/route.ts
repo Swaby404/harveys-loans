@@ -55,7 +55,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       action: "LOAN_APPROVED",
       entityType: "Loan",
       entityId: id,
-      metadata: { approvedAmount, adminNotes: body.adminNotes },
+      metadata: JSON.stringify({ approvedAmount, adminNotes: body.adminNotes }),
     },
   });
 

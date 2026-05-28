@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
         action: "PAYMENT_RECEIVED",
         entityType: "Loan",
         entityId: loanId,
-        metadata: { amount: amountPaid, stripeIntentId: intent.id, newBalance },
+        metadata: JSON.stringify({ amount: amountPaid, stripeIntentId: intent.id, newBalance }),
       },
     });
   }
