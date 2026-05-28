@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  passwordHash        String
+  firstName           String
+  lastName            String
+  phone               String?
+  role                String    @default("CLIENT")
+  isActive            Boolean   @default(true)
+  emailVerified       DateTime?
+  resetToken          String?   @unique
+  resetTokenExpiresAt DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  loans    Loan[]
+  payments Payment[]
+  sessions Session[]
+  accounts Account[]
+
+  @@map("users")
+}
+
+model Loan {
+  id              String  @id @default(cuid())
+  userId          String
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobTitle        String
+  jobSalary       String
+  requestedAmount Decimal
+  processingFee   Decimal @default(20.00)
+  approvedAmount  Decimal?
+  status          String  @default("PENDING")
+
+  jobLetterFileKey  String?
+  jobLetterFileName String?
+  paystubFileKey    String?
+  paystubFileName   String?
+
+  principalAmount      Decimal?
+  outstandingBalance   Decimal?
+  dueDate              DateTime?
+  approvedAt           DateTime?
+  approvedBy           String?
+  missedWeeks          Int       @default(0)
+  lastInterestCalcAt   DateTime?
+  currentInterestRate  Decimal?
+  adminNotes           String?
+  denialReason         String?
+  disclaimerAcceptedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  payments Payment[]
+
+  @@map("loans")
+}
+
+model Payment {
+  id              String   @id @default(cuid())
+  loanId          String
+  loan            Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  amountPaid      Decimal
+  balanceBefore   Decimal
+  balanceAfter    Decimal
+  paymentDate     DateTime @default(now())
+  dueDate         DateTime
+  status          String
+  weekNumber      Int
+  interestApplied Decimal  @default(0)
+  notes           String?
+  receiptSent     Boolean  @default(false)
+  receiptSentAt   DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@map("payments")
+}
+
+model InterestSchedule {
+  id          String   @id @default(cuid())
+  weekNumber  Int      @unique
+  ratePercent Decimal
+  label       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("interest_schedules")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String
+  metadata   String?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expires      DateTime
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
